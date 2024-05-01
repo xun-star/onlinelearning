@@ -2,6 +2,7 @@ package com.onlinelearning.content.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.onlinelearning.base.exception.OnlienLearningException;
 import com.onlinelearning.base.model.PageParams;
 import com.onlinelearning.base.model.PageResult;
 import com.onlinelearning.content.mapper.CourseBaseMapper;
@@ -75,7 +76,8 @@ public class CourseBaseInfoServiceImpl implements CourseBaseInfoService {
         courseBaseNew.setStatus("203001");
         int insert = courseBaseMapper.insert(courseBaseNew);
         if(insert <= 0){
-            throw new RuntimeException("添加课程失败");
+            //throw new RuntimeException("添加课程失败");
+            OnlienLearningException.cast("添加课程失败");
         }
         //向course——market表添加信息
         CourseMarket courseMarketNew = new CourseMarket();
@@ -112,7 +114,8 @@ public class CourseBaseInfoServiceImpl implements CourseBaseInfoService {
         }
         if(charge.equals("201001")){
             if(courseMarket.getPrice()==null || courseMarket.getPrice() <= 0){
-                throw new RuntimeException("课程价格有误");
+                //throw new RuntimeException("课程价格有误");
+                OnlienLearningException.cast("课程价格不能为空，且必须大于0");
             }
         }
         //从数据库查询数据，存在则更新，不存在则添加
