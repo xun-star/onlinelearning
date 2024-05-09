@@ -5,14 +5,15 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.onlinelearning.base.exception.OnlienLearningException;
 import com.onlinelearning.base.model.PageParams;
 import com.onlinelearning.base.model.PageResult;
-import com.onlinelearning.content.mapper.CourseBaseMapper;
-import com.onlinelearning.content.mapper.CourseCategoryMapper;
-import com.onlinelearning.content.mapper.CourseMarketMapper;
+import com.onlinelearning.content.mapper.*;
 import com.onlinelearning.content.model.dto.AddCourseDto;
 import com.onlinelearning.content.model.dto.CourseBaseInfoDto;
+import com.onlinelearning.content.model.dto.EditCourseDto;
 import com.onlinelearning.content.model.dto.QueryCourseParamsDto;
 import com.onlinelearning.content.model.po.CourseBase;
 import com.onlinelearning.content.model.po.CourseMarket;
+import com.onlinelearning.content.model.po.CourseTeacher;
+import com.onlinelearning.content.model.po.Teachplan;
 import com.onlinelearning.content.service.CourseBaseInfoService;
 import com.onlinelearning.content.service.CourseCategoryService;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +35,10 @@ public class CourseBaseInfoServiceImpl implements CourseBaseInfoService {
     CourseMarketMapper courseMarketMapper;
     @Autowired
     CourseCategoryMapper courseCategoryMapper;
+    @Autowired
+    TeachplanMapper teachplanMapper;
+    @Autowired
+    CourseTeacherMapper courseTeacherMapper;
     @Override
     public PageResult<CourseBase> queryCourseBaseList(PageParams pageParams, QueryCourseParamsDto queryCourseParamsDto) {
         //拼装查询条件
@@ -88,7 +93,7 @@ public class CourseBaseInfoServiceImpl implements CourseBaseInfoService {
         CourseBaseInfoDto courseBaseInfo = getCourseBaseInfo(courseId);
         return courseBaseInfo;
     }
-    public CourseBaseInfoDto getCourseBaseInfo(long courseId){
+    public CourseBaseInfoDto getCourseBaseInfo(Long courseId){
         //从课程基本表中查询
         CourseBase courseBase = courseBaseMapper.selectById(courseId);
         if(courseBase == null){
@@ -105,6 +110,57 @@ public class CourseBaseInfoServiceImpl implements CourseBaseInfoService {
         //todo:课程分类的名称设置到courseBaseInfoDto中
         return courseBaseInfoDto;
     }
+
+    @Override
+    public CourseBaseInfoDto updateCourseBase(Long companyId, EditCourseDto editCourseDto) {
+        //拿到课程id
+        Long courseId = editCourseDto.getId();
+        CourseBase courseBase = courseBaseMapper.selectById(courseId);
+        if(courseBase == null){
+            OnlienLearningException.cast("课程不存在");
+        }
+        //数据的合法性校验
+        if(!companyId.equals(courseBase.getCompanyId())){
+            OnlienLearningException.cast("本机构只能修改本机构的课程");
+        }
+        //封装数据
+        BeanUtils.copyProperties(editCourseDto,courseBase);
+        //修改时间
+        courseBase.setChangeDate(LocalDateTime.now());
+        //更新至数据库
+        int i = courseBaseMapper.updateById(courseBase);
+        if(i <= 0){
+            OnlienLearningException.cast("更新失败");
+        }
+        //更新营销信息
+        CourseMarket courseMarket = new CourseMarket();
+        BeanUtils.copyProperties(editCourseDto,courseMarket);
+        saveCourseMarket(courseMarket);
+        //查询课程信息
+        CourseBaseInfoDto courseBaseInfo = getCourseBaseInfo(courseId);
+        BeanUtils.copyProperties(courseMarket,courseBaseInfo);
+        return courseBaseInfo;
+    }
+
+    @Override
+    public void delectCourse(Long companyId, Long courseId) {
+        CourseBase courseBase = courseBaseMapper.selectById(courseId);
+        if (!companyId.equals(courseBase.getCompanyId()))
+            OnlienLearningException.cast("只允许删除本机构的课程");
+        // 删除课程教师信息
+        LambdaQueryWrapper<CourseTeacher> teacherLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        teacherLambdaQueryWrapper.eq(CourseTeacher::getCourseId, courseId);
+        courseTeacherMapper.delete(teacherLambdaQueryWrapper);
+        // 删除课程计划
+        LambdaQueryWrapper<Teachplan> teachplanLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        teachplanLambdaQueryWrapper.eq(Teachplan::getCourseId, courseId);
+        teachplanMapper.delete(teachplanLambdaQueryWrapper);
+        // 删除营销信息
+        courseMarketMapper.deleteById(courseId);
+        // 删除课程基本信息
+        courseBaseMapper.deleteById(courseId);
+    }
+
     //从数据库查询数据，存在则更新，不存在则添加
     private int saveCourseMarket(CourseMarket courseMarket){
         //参数的合法性校验
