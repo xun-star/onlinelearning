@@ -11,6 +11,11 @@
     <artifactId>onlinelearning-content-service</artifactId>
 
     <dependencies>
+        <!--nacos 注册-->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.onlinelearning</groupId>
             <artifactId>onlinelearning-content-model</artifactId>

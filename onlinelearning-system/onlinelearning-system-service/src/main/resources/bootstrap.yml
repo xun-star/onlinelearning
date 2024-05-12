@@ -1,24 +1,43 @@
-server:
-  servlet:
-    context-path: /system
-  port: 63110
 #微服务配置
 spring:
   application:
-    name: system-api
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://192.168.101.65:3306/onlinelearning_system?serverTimezone=UTC&userUnicode=true&useSSL=false&
-    username: root
-    password: mysql
-# 日志文件配置路径
-logging:
-  config: classpath:log4j2-dev.xml
+    name: system-service #服务名
+  cloud:
+    nacos:
+      server-addr: 192.168.101.65:8848
+      config: # 配置文件相关配置
+        namespace: dev_xun
+        group: onlinelearning-project
+        file-extension: yaml
+        refresh-enabled: true
+        shared-configs:
+          - data-id: logging-${spring.profiles.active}.yaml
+            group: xuecheng-plus-common
+            refresh: true
+  profiles:
+    active: dev #环境名
 
-# swagger 文档配置
-swagger:
-  title: "在线学习系统管理"
-  description: "系统管理接口"
-  base-package: com.xuecheng.system
-  enabled: true
-  version: 1.0.0
+#server:
+#  servlet:
+#    context-path: /system
+#  port: 63110
+#微服务配置
+#spring:
+#  application:
+#    name: system-api
+#  datasource:
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#    url: jdbc:mysql://192.168.101.65:3306/onlinelearning_system?serverTimezone=UTC&userUnicode=true&useSSL=false&
+#    username: root
+#    password: mysql
+# 日志文件配置路径
+#logging:
+#  config: classpath:log4j2-dev.xml
+#
+## swagger 文档配置
+#swagger:
+#  title: "在线学习系统管理"
+#  description: "系统管理接口"
+#  base-package: com.xuecheng.system
+#  enabled: true
+#  version: 1.0.0

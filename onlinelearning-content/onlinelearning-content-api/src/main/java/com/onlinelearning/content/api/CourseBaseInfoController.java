@@ -33,7 +33,6 @@ public class CourseBaseInfoController {
     public CourseBaseInfoDto createCourseBase(@RequestBody @Validated(ValidationGroups.Insert.class) AddCourseDto addCourseDto){
         Long companyId = 1232141425L;
         CourseBaseInfoDto courseBase = courseBaseInfoService.createCourseBase(companyId, addCourseDto);
-
         return courseBase;
     }
     @ApiOperation("根据课程id查询课程")
